@@ -1,0 +1,1492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chain Weaver - Socket Protocol Adventure</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: linear-gradient(135deg, #0a0a12 0%, #12121f 50%, #0a0a12 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            overflow-x: hidden;
+        }
+
+        .bg-particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: #00f0ff;
+            border-radius: 50%;
+            animation: float 15s infinite linear;
+            opacity: 0.3;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+            10% { opacity: 0.5; }
+            90% { opacity: 0.5; }
+            100% { transform: translateY(-100vh) rotate(720deg); opacity: 0; }
+        }
+
+        .container {
+            width: 100%;
+            max-width: 450px;
+            padding: 15px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .logo {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #00f0ff 0%, #7b2fff 50%, #ff00e5 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: 2px;
+        }
+
+        .subtitle {
+            font-size: 0.75rem;
+            color: #666;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-top: 3px;
+        }
+
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            padding: 12px;
+            background: rgba(0, 240, 255, 0.03);
+            border-radius: 12px;
+            border: 1px solid rgba(0, 240, 255, 0.15);
+            margin-bottom: 12px;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-icon {
+            font-size: 1.2rem;
+        }
+
+        .stat-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            color: #00f0ff;
+        }
+
+        .stat-label {
+            font-size: 0.6rem;
+            color: #555;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .game-screen {
+            background: linear-gradient(180deg, rgba(0,0,0,0.6) 0%, rgba(20,20,35,0.8) 100%);
+            border-radius: 16px;
+            border: 2px solid rgba(0, 240, 255, 0.2);
+            overflow: hidden;
+            box-shadow: 0 0 50px rgba(0, 240, 255, 0.1),
+                        inset 0 0 80px rgba(0, 0, 0, 0.5);
+        }
+
+        .scene-display {
+            height: 180px;
+            background: linear-gradient(180deg, #0a0a15 0%, #151525 100%);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .scene-art {
+            font-size: 4rem;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .scene-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 60%;
+            background: linear-gradient(transparent, rgba(10,10,20,0.95));
+        }
+
+        .scene-title {
+            position: absolute;
+            bottom: 15px;
+            left: 20px;
+            right: 20px;
+        }
+
+        .scene-title h2 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.1rem;
+            color: #00f0ff;
+            margin-bottom: 3px;
+        }
+
+        .scene-title p {
+            font-size: 0.75rem;
+            color: #888;
+        }
+
+        .story-section {
+            padding: 20px;
+            min-height: 150px;
+        }
+
+        .story-text {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: #ccc;
+            margin-bottom: 15px;
+        }
+
+        .story-text .highlight {
+            color: #00f0ff;
+            font-weight: 600;
+        }
+
+        .story-text .highlight-purple {
+            color: #b366ff;
+            font-weight: 600;
+        }
+
+        .story-text .highlight-pink {
+            color: #ff66b2;
+            font-weight: 600;
+        }
+
+        .choices {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .choice-btn {
+            padding: 14px 18px;
+            background: rgba(0, 240, 255, 0.08);
+            border: 1px solid rgba(0, 240, 255, 0.25);
+            border-radius: 10px;
+            color: #fff;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .choice-btn:hover {
+            background: rgba(0, 240, 255, 0.15);
+            border-color: rgba(0, 240, 255, 0.5);
+            transform: translateX(5px);
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.2);
+        }
+
+        .choice-btn .choice-icon {
+            font-size: 1.3rem;
+        }
+
+        .choice-btn.special {
+            background: linear-gradient(90deg, rgba(123, 47, 255, 0.15), rgba(255, 0, 229, 0.15));
+            border-color: rgba(123, 47, 255, 0.4);
+        }
+
+        .choice-btn.special:hover {
+            background: linear-gradient(90deg, rgba(123, 47, 255, 0.25), rgba(255, 0, 229, 0.25));
+            border-color: rgba(123, 47, 255, 0.6);
+        }
+
+        .battle-section {
+            padding: 20px;
+        }
+
+        .battle-arena {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+        }
+
+        .combatant {
+            text-align: center;
+        }
+
+        .combatant-icon {
+            font-size: 3rem;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .combatant-name {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.8rem;
+            color: #00f0ff;
+        }
+
+        .combatant.enemy .combatant-name {
+            color: #ff4757;
+        }
+
+        .health-bar {
+            width: 80px;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            margin-top: 5px;
+            overflow: hidden;
+        }
+
+        .health-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff88, #00f0ff);
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        .health-fill.enemy {
+            background: linear-gradient(90deg, #ff4757, #ff6b81);
+        }
+
+        .vs-icon {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.5rem;
+            color: #ff00e5;
+            text-shadow: 0 0 20px rgba(255, 0, 229, 0.5);
+        }
+
+        .battle-actions {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .battle-btn {
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+        }
+
+        .battle-btn.attack {
+            background: linear-gradient(135deg, #ff4757, #ff6b81);
+            color: #fff;
+        }
+
+        .battle-btn.gateway {
+            background: linear-gradient(135deg, #00f0ff, #00c8ff);
+            color: #000;
+        }
+
+        .battle-btn.switchboard {
+            background: linear-gradient(135deg, #7b2fff, #b366ff);
+            color: #fff;
+        }
+
+        .battle-btn.transmit {
+            background: linear-gradient(135deg, #ff00e5, #ff66b2);
+            color: #fff;
+        }
+
+        .battle-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .battle-log {
+            margin-top: 15px;
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            font-size: 0.8rem;
+            color: #888;
+            max-height: 60px;
+            overflow-y: auto;
+        }
+
+        .mofa-section {
+            padding: 20px;
+        }
+
+        .auction-display {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .auction-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.9rem;
+            color: #ff00e5;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .bidders {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .bidder {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .bidder:hover {
+            background: rgba(0, 240, 255, 0.1);
+            border-color: rgba(0, 240, 255, 0.3);
+        }
+
+        .bidder.selected {
+            background: rgba(0, 240, 255, 0.15);
+            border-color: rgba(0, 240, 255, 0.5);
+        }
+
+        .bidder-name {
+            font-weight: 600;
+            color: #00f0ff;
+        }
+
+        .bidder-stats {
+            font-size: 0.75rem;
+            color: #888;
+        }
+
+        .bidder-stats span {
+            margin-left: 10px;
+        }
+
+        .confirm-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #00f0ff 0%, #7b2fff 100%);
+            border: none;
+            border-radius: 10px;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+        }
+
+        .confirm-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 30px rgba(0, 240, 255, 0.4);
+        }
+
+        .confirm-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .result-section {
+            padding: 25px;
+            text-align: center;
+        }
+
+        .result-icon {
+            font-size: 4rem;
+            margin-bottom: 15px;
+        }
+
+        .result-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+
+        .result-title.victory {
+            color: #00ff88;
+            text-shadow: 0 0 30px rgba(0, 255, 136, 0.5);
+        }
+
+        .result-title.defeat {
+            color: #ff4757;
+            text-shadow: 0 0 30px rgba(255, 71, 87, 0.5);
+        }
+
+        .final-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .final-stat {
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .final-stat-label {
+            font-size: 0.65rem;
+            color: #555;
+            text-transform: uppercase;
+        }
+
+        .final-stat-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.2rem;
+            color: #00f0ff;
+            margin-top: 4px;
+        }
+
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .btn {
+            padding: 14px 30px;
+            border: none;
+            border-radius: 10px;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #00f0ff 0%, #7b2fff 100%);
+            color: #fff;
+        }
+
+        .btn-share {
+            background: linear-gradient(135deg, #1da1f2, #0d8ed9);
+            color: #fff;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .social-links {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 15px;
+        }
+
+        .social-link {
+            padding: 8px 15px;
+            background: rgba(0, 240, 255, 0.1);
+            border: 1px solid rgba(0, 240, 255, 0.25);
+            border-radius: 6px;
+            color: #00f0ff;
+            text-decoration: none;
+            font-size: 0.75rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .social-link:hover {
+            background: rgba(0, 240, 255, 0.2);
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 0.7rem;
+            color: #444;
+        }
+
+        .footer a {
+            color: #00f0ff;
+            text-decoration: none;
+        }
+
+        .dev-link {
+            color: #b366ff !important;
+            font-weight: 600;
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background: #12121f;
+            border-radius: 16px;
+            padding: 25px;
+            max-width: 400px;
+            width: 100%;
+            border: 1px solid rgba(0, 240, 255, 0.3);
+        }
+
+        .modal h3 {
+            font-family: 'Orbitron', sans-serif;
+            color: #00f0ff;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .share-preview {
+            border-radius: 10px;
+            max-width: 100%;
+            margin-bottom: 15px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .modal-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .modal-btn.twitter {
+            background: #1da1f2;
+            color: #fff;
+        }
+
+        .modal-btn.download {
+            background: #00ff88;
+            color: #000;
+        }
+
+        .modal-btn.close {
+            background: rgba(255, 255, 255, 0.1);
+            color: #888;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .edu-popup {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, rgba(0, 240, 255, 0.15), rgba(123, 47, 255, 0.15));
+            border: 1px solid rgba(0, 240, 255, 0.3);
+            border-radius: 12px;
+            padding: 12px 20px;
+            max-width: 350px;
+            z-index: 50;
+            animation: slideUp 0.5s ease;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateX(-50%) translateY(100px); opacity: 0; }
+            to { transform: translateX(-50%) translateY(0); opacity: 1; }
+        }
+
+        .edu-popup h4 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.75rem;
+            color: #00f0ff;
+            margin-bottom: 5px;
+        }
+
+        .edu-popup p {
+            font-size: 0.75rem;
+            color: #aaa;
+            line-height: 1.4;
+        }
+
+        .edu-close {
+            position: absolute;
+            top: 8px;
+            right: 12px;
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .timer-bar {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            margin-bottom: 15px;
+            overflow: hidden;
+        }
+
+        .timer-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff00e5, #00f0ff);
+            border-radius: 3px;
+            transition: width 0.1s linear;
+        }
+
+        .reward-popup {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.95);
+            border: 2px solid #00ff88;
+            border-radius: 16px;
+            padding: 25px;
+            text-align: center;
+            z-index: 60;
+            animation: popIn 0.3s ease;
+        }
+
+        @keyframes popIn {
+            from { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+            to { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+
+        .reward-icon {
+            font-size: 3rem;
+            margin-bottom: 10px;
+        }
+
+        .reward-text {
+            font-family: 'Orbitron', sans-serif;
+            color: #00ff88;
+            font-size: 1rem;
+            margin-bottom: 15px;
+        }
+
+        .reward-close {
+            padding: 10px 25px;
+            background: #00ff88;
+            border: none;
+            border-radius: 8px;
+            color: #000;
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        @media (max-width: 400px) {
+            .logo { font-size: 1.5rem; }
+            .stats-bar { gap: 5px; }
+            .stat-value { font-size: 0.9rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-particles" id="particles"></div>
+
+    <div class="container">
+        <div class="header">
+            <div class="logo">⚡ CHAIN WEAVER</div>
+            <div class="subtitle">A Socket Protocol Adventure</div>
+        </div>
+
+        <div class="stats-bar" id="statsBar">
+            <div class="stat">
+                <div class="stat-icon">⚡</div>
+                <div class="stat-value" id="energy">100</div>
+                <div class="stat-label">Energy</div>
+            </div>
+            <div class="stat">
+                <div class="stat-icon">🔗</div>
+                <div class="stat-value" id="chains">1</div>
+                <div class="stat-label">Chains</div>
+            </div>
+            <div class="stat">
+                <div class="stat-icon">💎</div>
+                <div class="stat-value" id="tokens">0</div>
+                <div class="stat-label">Tokens</div>
+            </div>
+            <div class="stat">
+                <div class="stat-icon">⭐</div>
+                <div class="stat-value" id="level">1</div>
+                <div class="stat-label">Level</div>
+            </div>
+        </div>
+
+        <div class="game-screen">
+            <div id="gameContent"></div>
+        </div>
+
+        <div class="footer">
+            <p>A community game for <a href="https://socket.tech" target="_blank">Socket Protocol</a> ⚡</p>
+            <p style="margin-top: 5px;">Developed by <a href="https://x.com/DabidWm" target="_blank" class="dev-link">@DabidWm</a></p>
+        </div>
+    </div>
+
+    <div class="edu-popup hidden" id="eduPopup">
+        <button class="edu-close" onclick="closeEdu()">×</button>
+        <h4 id="eduTitle">Socket Tip</h4>
+        <p id="eduText"></p>
+    </div>
+
+    <div class="modal hidden" id="shareModal">
+        <div class="modal-content">
+            <h3>🔗 Share Your Score!</h3>
+            <canvas id="shareCanvas" class="share-preview" width="500" height="300"></canvas>
+            <div class="modal-buttons">
+                <button class="modal-btn twitter" onclick="shareTwitter()">𝕏 Tweet</button>
+                <button class="modal-btn download" onclick="downloadCard()">💾 Save</button>
+                <button class="modal-btn close" onclick="closeModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============ GAME STATE ============
+        const state = {
+            energy: 100,
+            chains: 1,
+            tokens: 0,
+            level: 1,
+            currentScene: 'intro',
+            playerHealth: 100,
+            enemyHealth: 100,
+            maxEnemyHealth: 100,
+            chainsUnified: 0,
+            battlesWon: 0,
+            mofaCompleted: 0,
+            selectedBidder: null,
+            mofaTimer: null,
+            mofaTimeLeft: 100
+        };
+
+        // ============ SCENES ============
+        const scenes = {
+            intro: {
+                art: '🌌',
+                title: 'The Fragmented Realms',
+                location: 'Year 2099 - The Crypto Universe',
+                text: `In a universe where <span class="highlight">300+ blockchain realms</span> exist in isolation, chaos reigns. Users struggle with fragmented liquidity, endless bridges, and the tyranny of <span class="highlight-pink">The Fragmentor</span>—a villain who thrives on division.<br><br>You are the last <span class="highlight-purple">Chain Weaver</span>, chosen to wield the power of <span class="highlight">Socket Protocol</span> and unite the realms!<br><br><em>gmofa, Chain Weaver!</em> ⚡`,
+                choices: [
+                    { text: 'Accept your destiny', icon: '⚡', next: 'training' },
+                    { text: 'Learn about Socket Protocol', icon: '📚', next: 'tutorial' }
+                ]
+            },
+            tutorial: {
+                art: '📖',
+                title: 'The Power of Socket',
+                location: 'Ancient Library of Protocols',
+                text: `The elder explains: <span class="highlight">Socket Protocol</span> enables <span class="highlight-purple">Chain Abstraction</span>—treating all blockchains as ONE unified realm.<br><br>Your powers:<br>🔷 <span class="highlight">AppGateway</span> - Plan moves offchain<br>🔷 <span class="highlight-purple">Switchboard</span> - Verify & heal<br>🔷 <span class="highlight-pink">Watcher</span> - Generate proofs<br>🔷 <span class="highlight">Transmitter</span> - Execute cross-chain attacks`,
+                choices: [
+                    { text: 'Begin my training!', icon: '⚔️', next: 'training' }
+                ]
+            },
+            training: {
+                art: '🎯',
+                title: 'Training Grounds',
+                location: 'Socket Academy',
+                text: `Master <span class="highlight">Vaibhav</span> approaches: "Before facing The Fragmentor, you must learn <span class="highlight-purple">MOFA</span>—Modular Order Flow Auctions."<br><br>"In MOFA, <span class="highlight">Transmitters</span> compete to execute your cross-chain orders. The best execution wins!"`,
+                choices: [
+                    { text: 'Enter MOFA Training', icon: '🏆', next: 'mofa_tutorial', special: true },
+                    { text: 'Skip to first realm', icon: '🚀', next: 'realm1' }
+                ]
+            },
+            mofa_tutorial: {
+                type: 'mofa',
+                art: '🏛️',
+                title: 'MOFA Auction',
+                location: 'Order Flow Marketplace',
+                text: `Select a Transmitter to execute your cross-chain transfer. Balance <span class="highlight">speed</span>, <span class="highlight-purple">cost</span>, and <span class="highlight-pink">reliability</span>!<br><br>⏱️ You have <span class="highlight">10 seconds</span> to decide!`,
+                bidders: [
+                    { name: 'SpeedyTX', speed: '⚡⚡⚡', cost: '💰💰💰', reliability: '🛡️🛡️', score: 70 },
+                    { name: 'ValueBot', speed: '⚡⚡', cost: '💰', reliability: '🛡️🛡️🛡️', score: 85 },
+                    { name: 'BalancedNode', speed: '⚡⚡', cost: '💰💰', reliability: '🛡️🛡️🛡️', score: 90 }
+                ],
+                bestChoice: 2,
+                next: 'realm1'
+            },
+            realm1: {
+                art: '🏔️',
+                title: 'Ethereum Heights',
+                location: 'The First Realm',
+                text: `You arrive at <span class="highlight">Ethereum Heights</span>, the ancient mainnet realm. Gas fees are HIGH and transactions are SLOW.<br><br>A guardian blocks your path: "Prove your <span class="highlight-purple">Chain Abstraction</span> skills!"`,
+                choices: [
+                    { text: 'Battle the Guardian!', icon: '⚔️', next: 'battle1' },
+                    { text: 'Use AppGateway to negotiate', icon: '🔷', next: 'negotiate1', special: true }
+                ]
+            },
+            negotiate1: {
+                art: '🤝',
+                title: 'Diplomatic Victory!',
+                location: 'Ethereum Heights',
+                text: `Your <span class="highlight">AppGateway</span> runs offchain simulations, finding the optimal negotiation path!<br><br>The Guardian: "You understand Socket's power. Offchain coordination, onchain execution—brilliant!"<br><br><span class="highlight-purple">+50 Tokens | +1 Chain Unified</span>`,
+                reward: { tokens: 50, chains: 1, energy: 20 },
+                choices: [
+                    { text: 'Continue to Base Depths', icon: '🚀', next: 'realm2' }
+                ]
+            },
+            battle1: {
+                type: 'battle',
+                art: '⚔️',
+                title: 'Guardian Battle',
+                location: 'Ethereum Heights',
+                enemy: { name: 'ETH Guardian', emoji: '🛡️', health: 100 },
+                next: 'realm2'
+            },
+            realm2: {
+                art: '🌊',
+                title: 'Base Depths',
+                location: 'The L2 Ocean',
+                text: `You dive into <span class="highlight">Base Depths</span>, an L2 realm. Fast and cheap, but fragmented liquidity!<br><br><span class="highlight-pink">Liquidity Leech</span> appears: "Your unified pools end HERE!"`,
+                choices: [
+                    { text: 'Enter MOFA Arena', icon: '🏆', next: 'mofa_battle', special: true },
+                    { text: 'Direct attack!', icon: '⚔️', next: 'battle2' }
+                ]
+            },
+            mofa_battle: {
+                type: 'mofa',
+                art: '🏆',
+                title: 'MOFA Arena',
+                location: 'Base Depths',
+                text: `Select the best Transmitter for your <span class="highlight">cross-chain liquidity attack</span>!<br><br>Choose <span class="highlight-purple">wisely</span> for maximum damage!`,
+                bidders: [
+                    { name: 'BlitzRunner', speed: '⚡⚡⚡⚡', cost: '💰💰💰', reliability: '🛡️🛡️', score: 65 },
+                    { name: 'SecureVault', speed: '⚡', cost: '💰💰', reliability: '🛡️🛡️🛡️🛡️', score: 95 },
+                    { name: 'HybridForce', speed: '⚡⚡⚡', cost: '💰💰', reliability: '🛡️🛡️🛡️', score: 80 }
+                ],
+                bestChoice: 1,
+                next: 'realm3'
+            },
+            battle2: {
+                type: 'battle',
+                art: '⚔️',
+                title: 'Liquidity Leech',
+                location: 'Base Depths',
+                enemy: { name: 'Liquidity Leech', emoji: '🦑', health: 120 },
+                next: 'realm3'
+            },
+            realm3: {
+                art: '🌙',
+                title: 'Arbitrum Nexus',
+                location: 'The Speed Dimension',
+                text: `The <span class="highlight">Arbitrum Nexus</span> pulses with energy. <span class="highlight-purple">Switchboards</span> verify all actions here.<br><br>A corrupted Switchboard blocks you: "The Fragmentor controls me now!"`,
+                choices: [
+                    { text: 'Deploy Watcher to generate proof', icon: '👁️', next: 'watcher_scene', special: true },
+                    { text: 'Force through!', icon: '💥', next: 'battle3' }
+                ]
+            },
+            watcher_scene: {
+                art: '👁️',
+                title: 'Watcher Deployed!',
+                location: 'Arbitrum Nexus',
+                text: `Your <span class="highlight-purple">Watcher</span> generates a <span class="highlight">cryptographic proof of manipulation</span>!<br><br>The proof is undeniable. The Switchboard is freed!<br><br><span class="highlight">+75 Tokens | +1 Chain Unified</span>`,
+                reward: { tokens: 75, chains: 1, energy: 25 },
+                choices: [
+                    { text: 'Face The Fragmentor!', icon: '⚡', next: 'final_approach' }
+                ]
+            },
+            battle3: {
+                type: 'battle',
+                art: '⚔️',
+                title: 'Corrupted Switchboard',
+                location: 'Arbitrum Nexus',
+                enemy: { name: 'Corrupted Switch', emoji: '🔌', health: 150 },
+                next: 'final_approach'
+            },
+            final_approach: {
+                art: '🌑',
+                title: 'The Dark Core',
+                location: 'Fragmentor\'s Domain',
+                text: `You've unified multiple chains! The Fragmentor's power weakens.<br><br><span class="highlight-pink">THE FRAGMENTOR</span> emerges: "You think chain abstraction can defeat ME? I AM fragmentation incarnate!"`,
+                choices: [
+                    { text: 'Final Battle!', icon: '⚔️', next: 'final_battle', special: true }
+                ]
+            },
+            final_battle: {
+                type: 'battle',
+                art: '👹',
+                title: 'THE FRAGMENTOR',
+                location: 'Core of Chaos',
+                enemy: { name: 'The Fragmentor', emoji: '👹', health: 200 },
+                isFinal: true,
+                next: 'victory'
+            },
+            victory: {
+                type: 'ending',
+                result: 'victory',
+                art: '🏆',
+                title: 'CHAINS UNIFIED!',
+                text: `The Fragmentor dissolves! You've brought <span class="highlight">Chain Abstraction</span> to all realms!<br><br>Thanks to <span class="highlight-purple">Socket Protocol</span>, users enjoy seamless cross-chain experiences. MOFA thrives, AppGateways coordinate globally!<br><br><em>gmofa, Chain Weaver!</em> ⚡`
+            },
+            defeat: {
+                type: 'ending',
+                result: 'defeat',
+                art: '💀',
+                title: 'FRAGMENTED',
+                text: `The Fragmentor's chaos overwhelms you... But chain abstraction cannot be stopped!<br><br>Remember: <span class="highlight-purple">AppGateway</span> plans, <span class="highlight">Switchboard</span> verifies, <span class="highlight-pink">Watcher</span> proves, <span class="highlight">Transmitter</span> executes!`
+            }
+        };
+
+        // ============ RENDER FUNCTIONS ============
+        function render() {
+            updateStats();
+            const scene = scenes[state.currentScene];
+            
+            if (scene.type === 'battle') {
+                renderBattle(scene);
+            } else if (scene.type === 'mofa') {
+                renderMOFA(scene);
+            } else if (scene.type === 'ending') {
+                renderEnding(scene);
+            } else {
+                renderStory(scene);
+            }
+        }
+
+        function updateStats() {
+            document.getElementById('energy').textContent = state.energy;
+            document.getElementById('chains').textContent = state.chains;
+            document.getElementById('tokens').textContent = state.tokens;
+            document.getElementById('level').textContent = state.level;
+        }
+
+        function renderStory(scene) {
+            if (scene.reward) {
+                if (scene.reward.tokens) state.tokens += scene.reward.tokens;
+                if (scene.reward.chains) { state.chains++; state.chainsUnified++; }
+                if (scene.reward.energy) state.energy = Math.min(100, state.energy + scene.reward.energy);
+                updateStats();
+            }
+
+            let choicesHTML = scene.choices.map((c) => `
+                <button class="choice-btn ${c.special ? 'special' : ''}" onclick="choose('${c.next}')">
+                    <span class="choice-icon">${c.icon}</span>
+                    ${c.text}
+                </button>
+            `).join('');
+
+            document.getElementById('gameContent').innerHTML = `
+                <div class="scene-display">
+                    <div class="scene-art">${scene.art}</div>
+                    <div class="scene-overlay"></div>
+                    <div class="scene-title">
+                        <h2>${scene.title}</h2>
+                        <p>📍 ${scene.location}</p>
+                    </div>
+                </div>
+                <div class="story-section">
+                    <p class="story-text">${scene.text}</p>
+                    <div class="choices">${choicesHTML}</div>
+                </div>
+            `;
+
+            showEduPopup(state.currentScene);
+        }
+
+        function renderBattle(scene) {
+            state.playerHealth = 100;
+            state.enemyHealth = scene.enemy.health;
+            state.maxEnemyHealth = scene.enemy.health;
+
+            document.getElementById('gameContent').innerHTML = `
+                <div class="scene-display">
+                    <div class="scene-art">${scene.art}</div>
+                    <div class="scene-overlay"></div>
+                    <div class="scene-title">
+                        <h2>${scene.title}</h2>
+                        <p>📍 ${scene.location}</p>
+                    </div>
+                </div>
+                <div class="battle-section">
+                    <div class="battle-arena">
+                        <div class="combatant">
+                            <span class="combatant-icon">🦸</span>
+                            <div class="combatant-name">You</div>
+                            <div class="health-bar">
+                                <div class="health-fill" id="playerHealthBar" style="width: 100%"></div>
+                            </div>
+                        </div>
+                        <div class="vs-icon">VS</div>
+                        <div class="combatant enemy">
+                            <span class="combatant-icon">${scene.enemy.emoji}</span>
+                            <div class="combatant-name">${scene.enemy.name}</div>
+                            <div class="health-bar">
+                                <div class="health-fill enemy" id="enemyHealthBar" style="width: 100%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="battle-actions">
+                        <button class="battle-btn attack" onclick="battleAction('attack')">⚔️ Attack</button>
+                        <button class="battle-btn gateway" onclick="battleAction('gateway')">🔷 Gateway</button>
+                        <button class="battle-btn switchboard" onclick="battleAction('switchboard')">🔷 Switch</button>
+                        <button class="battle-btn transmit" onclick="battleAction('transmit')">⚡ Transmit</button>
+                    </div>
+                    <div class="battle-log" id="battleLog">⚔️ Battle begins! Use Socket powers wisely!</div>
+                </div>
+            `;
+
+            showEduPopup('battle');
+        }
+
+        function battleAction(action) {
+            const scene = scenes[state.currentScene];
+            let damage = 0;
+            let enemyDamage = 0;
+            let log = '';
+
+            switch(action) {
+                case 'attack':
+                    damage = 15 + Math.floor(Math.random() * 10);
+                    log = `⚔️ Attack: ${damage} dmg!`;
+                    break;
+                case 'gateway':
+                    if (state.energy < 10) {
+                        document.getElementById('battleLog').innerHTML = '❌ Need 10 energy!';
+                        return;
+                    }
+                    damage = 25 + Math.floor(Math.random() * 15);
+                    log = `🔷 AppGateway: ${damage} dmg!`;
+                    state.energy -= 10;
+                    break;
+                case 'switchboard':
+                    if (state.energy < 5) {
+                        document.getElementById('battleLog').innerHTML = '❌ Need 5 energy!';
+                        return;
+                    }
+                    damage = 10;
+                    state.playerHealth = Math.min(100, state.playerHealth + 20);
+                    log = `🔷 Switchboard: +20 HP, ${damage} dmg`;
+                    state.energy -= 5;
+                    break;
+                case 'transmit':
+                    if (state.energy < 20) {
+                        document.getElementById('battleLog').innerHTML = '❌ Need 20 energy!';
+                        return;
+                    }
+                    damage = 45 + Math.floor(Math.random() * 20);
+                    log = `⚡ Transmitter: ${damage} MASSIVE dmg!`;
+                    state.energy -= 20;
+                    break;
+            }
+
+            state.enemyHealth -= damage;
+            
+            if (state.enemyHealth > 0) {
+                enemyDamage = 10 + Math.floor(Math.random() * 15);
+                state.playerHealth -= enemyDamage;
+                log += ` 💥 Hit: ${enemyDamage}`;
+            }
+
+            document.getElementById('enemyHealthBar').style.width = Math.max(0, (state.enemyHealth / state.maxEnemyHealth) * 100) + '%';
+            document.getElementById('playerHealthBar').style.width = Math.max(0, state.playerHealth) + '%';
+            document.getElementById('battleLog').innerHTML = log;
+            updateStats();
+
+            if (state.enemyHealth <= 0) {
+                setTimeout(() => {
+                    state.battlesWon++;
+                    state.tokens += 40;
+                    state.chains++;
+                    state.chainsUnified++;
+                    if (state.level < 5) state.level++;
+                    state.currentScene = scene.isFinal ? 'victory' : scene.next;
+                    render();
+                }, 1000);
+            } else if (state.playerHealth <= 0) {
+                setTimeout(() => {
+                    state.currentScene = 'defeat';
+                    render();
+                }, 1000);
+            }
+        }
+
+        function renderMOFA(scene) {
+            state.selectedBidder = null;
+            state.mofaTimeLeft = 100;
+
+            let biddersHTML = scene.bidders.map((b, i) => `
+                <div class="bidder" id="bidder${i}" onclick="selectBidder(${i})">
+                    <div class="bidder-name">${b.name}</div>
+                    <div class="bidder-stats">
+                        <span>${b.speed}</span>
+                        <span>${b.cost}</span>
+                        <span>${b.reliability}</span>
+                    </div>
+                </div>
+            `).join('');
+
+            document.getElementById('gameContent').innerHTML = `
+                <div class="scene-display">
+                    <div class="scene-art">${scene.art}</div>
+                    <div class="scene-overlay"></div>
+                    <div class="scene-title">
+                        <h2>${scene.title}</h2>
+                        <p>📍 ${scene.location}</p>
+                    </div>
+                </div>
+                <div class="mofa-section">
+                    <p class="story-text">${scene.text}</p>
+                    <div class="timer-bar">
+                        <div class="timer-fill" id="timerFill" style="width: 100%"></div>
+                    </div>
+                    <div class="auction-display">
+                        <div class="auction-title">⚡ MOFA - Select Transmitter</div>
+                        <div class="bidders">${biddersHTML}</div>
+                    </div>
+                    <button class="confirm-btn" id="confirmBid" onclick="confirmMOFA()" disabled>Select a Transmitter</button>
+                </div>
+            `;
+
+            showEduPopup('mofa');
+            startMOFATimer(scene);
+        }
+
+        function startMOFATimer(scene) {
+            clearInterval(state.mofaTimer);
+            state.mofaTimer = setInterval(() => {
+                state.mofaTimeLeft -= 2;
+                const timerEl = document.getElementById('timerFill');
+                if (timerEl) timerEl.style.width = state.mofaTimeLeft + '%';
+                
+                if (state.mofaTimeLeft <= 0) {
+                    clearInterval(state.mofaTimer);
+                    if (state.selectedBidder === null) {
+                        state.selectedBidder = Math.floor(Math.random() * scene.bidders.length);
+                    }
+                    completeMOFA(scene);
+                }
+            }, 200);
+        }
+
+        function selectBidder(index) {
+            state.selectedBidder = index;
+            document.querySelectorAll('.bidder').forEach((b, i) => {
+                b.classList.toggle('selected', i === index);
+            });
+            document.getElementById('confirmBid').disabled = false;
+            document.getElementById('confirmBid').textContent = '⚡ Confirm';
+        }
+
+        function confirmMOFA() {
+            if (state.selectedBidder === null) return;
+            clearInterval(state.mofaTimer);
+            completeMOFA(scenes[state.currentScene]);
+        }
+
+        function completeMOFA(scene) {
+            state.mofaCompleted++;
+            const selected = scene.bidders[state.selectedBidder];
+            const isOptimal = state.selectedBidder === scene.bestChoice;
+            
+            const bonusTokens = isOptimal ? 60 : 30;
+            const bonusEnergy = isOptimal ? 25 : 10;
+            
+            state.tokens += bonusTokens;
+            state.energy = Math.min(100, state.energy + bonusEnergy);
+            state.chains++;
+            state.chainsUnified++;
+            if (state.level < 5) state.level++;
+
+            const resultMsg = isOptimal ? 
+                `🎯 Optimal! ${selected.name} executed perfectly!` :
+                `✅ ${selected.name} completed transfer.`;
+
+            document.getElementById('gameContent').innerHTML += `
+                <div class="reward-popup">
+                    <div class="reward-icon">${isOptimal ? '🏆' : '✅'}</div>
+                    <div class="reward-text">${resultMsg}<br>+${bonusTokens} 💎 | +${bonusEnergy} ⚡</div>
+                    <button class="reward-close" onclick="proceedAfterMOFA('${scene.next}')">Continue</button>
+                </div>
+            `;
+        }
+
+        function proceedAfterMOFA(next) {
+            state.currentScene = next;
+            render();
+        }
+
+        function renderEnding(scene) {
+            document.getElementById('gameContent').innerHTML = `
+                <div class="result-section">
+                    <div class="result-icon">${scene.art}</div>
+                    <h2 class="result-title ${scene.result}">${scene.title}</h2>
+                    <p class="story-text">${scene.text}</p>
+                    
+                    <div class="final-stats">
+                        <div class="final-stat">
+                            <div class="final-stat-label">Chains Unified</div>
+                            <div class="final-stat-value">🔗 ${state.chainsUnified}</div>
+                        </div>
+                        <div class="final-stat">
+                            <div class="final-stat-label">Battles Won</div>
+                            <div class="final-stat-value">⚔️ ${state.battlesWon}</div>
+                        </div>
+                        <div class="final-stat">
+                            <div class="final-stat-label">MOFA Auctions</div>
+                            <div class="final-stat-value">🏆 ${state.mofaCompleted}</div>
+                        </div>
+                        <div class="final-stat">
+                            <div class="final-stat-label">Tokens Earned</div>
+                            <div class="final-stat-value">💎 ${state.tokens}</div>
+                        </div>
+                    </div>
+
+                    <div class="action-buttons">
+                        <button class="btn btn-primary" onclick="restartGame()">⚡ Play Again</button>
+                        <button class="btn btn-share" onclick="openShareModal()">📸 Share Score</button>
+                    </div>
+
+                    <div class="social-links">
+                        <a href="https://x.com/socketprotocol" target="_blank" class="social-link">𝕏 @socketprotocol</a>
+                        <a href="https://socket.tech" target="_blank" class="social-link">🔌 socket.tech</a>
+                    </div>
+                </div>
+            `;
+        }
+
+        function choose(next) {
+            state.currentScene = next;
+            render();
+        }
+
+        function restartGame() {
+            state.energy = 100;
+            state.chains = 1;
+            state.tokens = 0;
+            state.level = 1;
+            state.currentScene = 'intro';
+            state.playerHealth = 100;
+            state.enemyHealth = 100;
+            state.chainsUnified = 0;
+            state.battlesWon = 0;
+            state.mofaCompleted = 0;
+            clearInterval(state.mofaTimer);
+            render();
+        }
+
+        // ============ EDUCATIONAL POPUPS ============
+        const eduContent = {
+            intro: { title: '🔌 Socket Protocol', text: 'Socket is the first chain abstraction protocol—interact with 300+ blockchains as ONE! $15B+ volume.' },
+            tutorial: { title: '🔷 Socket Components', text: 'AppGateway (offchain logic), Switchboard (verification), Watcher (proofs), Transmitter (execution)!' },
+            mofa: { title: '🏆 What is MOFA?', text: 'Modular Order Flow Auctions: Transmitters compete to execute your cross-chain requests optimally!' },
+            mofa_tutorial: { title: '🏆 MOFA Training', text: 'Choose wisely! Balance speed, cost, and reliability for best execution.' },
+            mofa_battle: { title: '⚡ Strategic MOFA', text: 'High reliability = higher success rate. Speed vs cost is the eternal tradeoff!' },
+            battle: { title: '⚔️ Socket Powers', text: 'Gateway: plan offchain. Switch: verify & heal. Transmit: massive cross-chain damage!' },
+            watcher_scene: { title: '👁️ Watchers', text: 'Watchers monitor chains and generate cryptographic proofs for Switchboards to verify!' },
+            training: { title: '📚 Chain Abstraction', text: 'Socket makes blockchains feel like ONE. No manual bridging, no gas juggling!' }
+        };
+
+        function showEduPopup(sceneKey) {
+            const content = eduContent[sceneKey];
+            if (content) {
+                document.getElementById('eduTitle').textContent = content.title;
+                document.getElementById('eduText').textContent = content.text;
+                document.getElementById('eduPopup').classList.remove('hidden');
+                
+                setTimeout(() => {
+                    document.getElementById('eduPopup').classList.add('hidden');
+                }, 7000);
+            }
+        }
+
+        function closeEdu() {
+            document.getElementById('eduPopup').classList.add('hidden');
+        }
+
+        // ============ SHARE FUNCTIONALITY ============
+        function openShareModal() {
+            generateShareCard();
+            document.getElementById('shareModal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('shareModal').classList.add('hidden');
+        }
+
+        function generateShareCard() {
+            const canvas = document.getElementById('shareCanvas');
+            const ctx = canvas.getContext('2d');
+            const w = 500, h = 300;
+
+            const grad = ctx.createLinearGradient(0, 0, w, h);
+            grad.addColorStop(0, '#0a0a12');
+            grad.addColorStop(0.5, '#12121f');
+            grad.addColorStop(1, '#0a0a12');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, w, h);
+
+            ctx.strokeStyle = 'rgba(0, 240, 255, 0.5)';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(5, 5, w - 10, h - 10);
+
+            ctx.fillStyle = '#00f0ff';
+            ctx.font = 'bold 28px Orbitron, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('⚡ CHAIN WEAVER ⚡', w / 2, 45);
+
+            const resultText = state.currentScene === 'victory' ? 'CHAINS UNIFIED!' : 'FRAGMENTED';
+            ctx.fillStyle = state.currentScene === 'victory' ? '#00ff88' : '#ff4757';
+            ctx.font = 'bold 22px Rajdhani, sans-serif';
+            ctx.fillText(resultText, w / 2, 80);
+
+            const stats = [
+                { label: 'Chains', value: '🔗 ' + state.chainsUnified },
+                { label: 'Battles', value: '⚔️ ' + state.battlesWon },
+                { label: 'MOFA', value: '🏆 ' + state.mofaCompleted },
+                { label: 'Tokens', value: '💎 ' + state.tokens }
+            ];
+
+            stats.forEach((s, i) => {
+                const x = 60 + (i * 100);
+                ctx.fillStyle = 'rgba(0, 240, 255, 0.1)';
+                ctx.fillRect(x, 100, 85, 60);
+                ctx.strokeStyle = 'rgba(0, 240, 255, 0.3)';
+                ctx.strokeRect(x, 100, 85, 60);
+
+                ctx.fillStyle = '#666';
+                ctx.font = '10px Rajdhani, sans-serif';
+                ctx.fillText(s.label.toUpperCase(), x + 42, 118);
+
+                ctx.fillStyle = '#00f0ff';
+                ctx.font = 'bold 18px Orbitron, sans-serif';
+                ctx.fillText(s.value, x + 42, 145);
+            });
+
+            ctx.fillStyle = '#888';
+            ctx.font = '14px Rajdhani, sans-serif';
+            ctx.fillText('Can you unify the blockchain realms? 👇', w / 2, 195);
+
+            ctx.fillStyle = '#7b2fff';
+            ctx.font = 'bold 18px Rajdhani, sans-serif';
+            ctx.fillText('🔌 socket.tech | gmofa!', w / 2, 225);
+
+            ctx.fillStyle = '#00f0ff';
+            ctx.font = '12px Rajdhani, sans-serif';
+            ctx.fillText('Play: abir2021.github.io/chain-weaver', w / 2, 255);
+
+            ctx.fillStyle = '#444';
+            ctx.font = '10px Rajdhani, sans-serif';
+            ctx.fillText('Game by @DabidWm | @socketprotocol', w / 2, 285);
+        }
+
+        function shareTwitter() {
+            const resultText = state.currentScene === 'victory' ? 
+                '🏆 I UNIFIED THE CHAINS!' : '💀 The Fragmentor got me...';
+            
+            const text = `⚡ ${resultText}
+
+Just played Chain Weaver - a @socketprotocol adventure!
+
+🔗 ${state.chainsUnified} chains unified
+⚔️ ${state.battlesWon} battles won  
+🏆 ${state.mofaCompleted} MOFA auctions
+💎 ${state.tokens} tokens
+
+Can you defeat The Fragmentor? 👇
+https://abir2021.github.io/chain-weaver/
+
+gmofa! #Socket #ChainAbstraction`;
+
+            window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank');
+        }
+
+        function downloadCard() {
+            const canvas = document.getElementById('shareCanvas');
+            const link = document.createElement('a');
+            link.download = 'chain-weaver-score.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        // ============ PARTICLES ============
+        function createParticles() {
+            const container = document.getElementById('particles');
+            for (let i = 0; i < 30; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 15 + 's';
+                particle.style.animationDuration = (10 + Math.random() * 10) + 's';
+                particle.style.background = Math.random() > 0.5 ? '#00f0ff' : '#7b2fff';
+                container.appendChild(particle);
+            }
+        }
+
+        // ============ INIT ============
+        createParticles();
+        render();
+    </script>
+</body>
+</html>
